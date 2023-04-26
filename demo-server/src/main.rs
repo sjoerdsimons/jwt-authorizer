@@ -1,5 +1,5 @@
 use axum::{routing::get, Router};
-use jwt_authorizer::{error::InitError, AuthError, JwtAuthorizer, JwtClaims, Refresh, RefreshStrategy};
+use jwt_authorizer::{error::InitError, AuthError, AuthorizerBuilder, JwtClaims, Refresh, RefreshStrategy};
 use serde::Deserialize;
 use std::net::SocketAddr;
 use tower_http::trace::TraceLayer;
@@ -36,8 +36,8 @@ async fn main() -> Result<(), InitError> {
 
     // First let's create an authorizer builder from a Oidc Discovery
     // User is a struct deserializable from JWT claims representing the authorized user
-    // let jwt_auth: JwtAuthorizer<User> = JwtAuthorizer::from_oidc("https://accounts.google.com/")
-    let jwt_auth: JwtAuthorizer<User> = JwtAuthorizer::from_oidc(issuer_uri)
+    // let jwt_auth: AuthorizerBuilder<User> = AuthorizerBuilder::from_oidc("https://accounts.google.com/")
+    let jwt_auth: AuthorizerBuilder<User> = AuthorizerBuilder::from_oidc(issuer_uri)
         // .no_refresh()
         .refresh(Refresh {
             strategy: RefreshStrategy::Interval,

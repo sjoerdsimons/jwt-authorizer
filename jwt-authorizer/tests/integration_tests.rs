@@ -11,7 +11,7 @@ use std::{
 use axum::{response::Response, routing::get, Json, Router};
 use http::{header::AUTHORIZATION, Request, StatusCode};
 use hyper::Body;
-use jwt_authorizer::{JwtAuthorizer, JwtClaims, Refresh, RefreshStrategy};
+use jwt_authorizer::{AuthorizerBuilder, JwtClaims, Refresh, RefreshStrategy};
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -87,7 +87,7 @@ fn run_jwks_server() -> String {
     url
 }
 
-async fn app(jwt_auth: JwtAuthorizer<User>) -> Router {
+async fn app(jwt_auth: AuthorizerBuilder<User>) -> Router {
     async fn public_handler() -> &'static str {
         "public"
     }
@@ -158,7 +158,8 @@ async fn sequential_tests() {
 async fn scenario1() {
     init_test();
     let url = run_jwks_server();
-    let auth: JwtAuthorizer<User> = JwtAuthorizer::from_oidc(&url);
+    let auth: AuthorizerBuilder<User> = AuthorizerBuilder::from_oidc(&url);
+
     let mut app = app(auth).await;
     assert_eq!(1, Stats::discovery_counter());
     assert_eq!(0, Stats::jwks_counter());
@@ -191,7 +192,7 @@ async fn scenario2() {
         retry_interval: Duration::from_millis(0),
         strategy: RefreshStrategy::Interval,
     };
-    let auth: JwtAuthorizer<User> = JwtAuthorizer::from_oidc(&url).refresh(refresh);
+    let auth: AuthorizerBuilder<User> = AuthorizerBuilder::from_oidc(&url).refresh(refresh);
     let mut app = app(auth).await;
     assert_eq!(1, Stats::discovery_counter());
     assert_eq!(0, Stats::jwks_counter());
@@ -220,7 +221,7 @@ async fn scenario3() {
         refresh_interval: Duration::from_millis(40),
         retry_interval: Duration::from_millis(0),
     };
-    let auth: JwtAuthorizer<User> = JwtAuthorizer::from_oidc(&url).refresh(refresh);
+    let auth: AuthorizerBuilder<User> = AuthorizerBuilder::from_oidc(&url).refresh(refresh);
     let mut app = app(auth).await;
     assert_eq!(1, Stats::discovery_counter());
     assert_eq!(0, Stats::jwks_counter());
@@ -251,7 +252,7 @@ async fn scenario4() {
         refresh_interval: Duration::from_millis(0),
         retry_interval: Duration::from_millis(0),
     };
-    let auth: JwtAuthorizer<User> = JwtAuthorizer::from_oidc(&url).refresh(refresh);
+    let auth: AuthorizerBuilder<User> = AuthorizerBuilder::from_oidc(&url).refresh(refresh);
     let mut app = app(auth).await;
     assert_eq!(1, Stats::discovery_counter());
     assert_eq!(0, Stats::jwks_counter());

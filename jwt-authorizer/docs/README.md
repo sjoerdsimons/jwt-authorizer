@@ -19,7 +19,7 @@ JWT authoriser Layer for Axum.
 ## Usage Example
 
 ```rust
-# use jwt_authorizer::{AuthError, JwtAuthorizer, JwtClaims};
+# use jwt_authorizer::{AuthError, AuthorizerBuilder, JwtClaims};
 # use axum::{routing::get, Router};
 # use serde::Deserialize;
 
@@ -32,8 +32,8 @@ JWT authoriser Layer for Axum.
     }
 
     // let's create an authorizer builder from a JWKS Endpoint
-    let jwt_auth: JwtAuthorizer<User> =
-                    JwtAuthorizer::from_jwks_url("http://localhost:3000/oidc/jwks");
+    let jwt_auth: AuthorizerBuilder<User> =
+                    AuthorizerBuilder::from_jwks_url("http://localhost:3000/oidc/jwks");
 
     // adding the authorization layer
     let app = Router::new().route("/protected", get(protected))
@@ -59,7 +59,7 @@ If no validation configuration is provided default values will be applyed.
 docs: [`jwt-authorizer::Validation`]
 
 ```rust
-# use jwt_authorizer::{JwtAuthorizer, Validation};
+# use jwt_authorizer::{AuthorizerBuilder, Validation};
 # use serde_json::Value;
 
 let validation = Validation::new()
@@ -68,7 +68,7 @@ let validation = Validation::new()
                     .nbf(true)
                     .leeway(20);
 
-let jwt_auth: JwtAuthorizer<Value> = JwtAuthorizer::from_oidc("https://accounts.google.com")
+let jwt_auth: AuthorizerBuilder<Value> = AuthorizerBuilder::from_oidc("https://accounts.google.com")
                       .validation(validation);
 
 ```
@@ -84,7 +84,7 @@ Example:
 
 ```rust
 
-    use jwt_authorizer::{JwtAuthorizer};
+    use jwt_authorizer::AuthorizerBuilder;
     use serde::Deserialize;
 
     // Authorized entity, struct deserializable from JWT claims
@@ -93,7 +93,7 @@ Example:
         sub: String,
     }
 
-    let authorizer = JwtAuthorizer::from_rsa_pem("../config/jwtRS256.key.pub")
+    let authorizer = AuthorizerBuilder::from_rsa_pem("../config/jwtRS256.key.pub")
                     .check(
                         |claims: &User| claims.sub.contains('@') // must be an email
                     );
@@ -103,9 +103,9 @@ Example:
 
 By default the jwks keys are reloaded when a request token is signed with a key (`kid` jwt header) that is not present in the store (a minimal intervale between 2 reloads is 10s by default, can be configured).
 
-- [`JwtAuthorizer::no_refresh()`] configures one and unique reload of jwks keys
-- [`JwtAuthorizer::refresh(refresh_configuration)`] allows to define a finer configuration for jwks refreshing, for more details see the documentation of `Refresh` struct.
+- [`AuthorizerBuilder::no_refresh()`] configures one and unique reload of jwks keys
+- [`AuthorizerBuilder::refresh(refresh_configuration)`] allows to define a finer configuration for jwks refreshing, for more details see the documentation of `Refresh` struct.
 
 [`jwt-authorizer::Validation`]: https://docs.rs/jwt-authorizer/latest/jwt_authorizer/validation/struct.Validation.html
-[`JwtAuthorizer::no_refresh()`]: https://docs.rs/jwt-authorizer/latest/jwt_authorizer/layer/struct.JwtAuthorizer.html#method.no_refresh
-[`JwtAuthorizer::refresh(refresh_configuration)`]: https://docs.rs/jwt-authorizer/latest/jwt_authorizer/layer/struct.JwtAuthorizer.html#method.refresh
+[`AuthorizerBuilder::no_refresh()`]: https://docs.rs/jwt-authorizer/latest/jwt_authorizer/layer/struct.AuthorizerBuilder.html#method.no_refresh
+[`AuthorizerBuilder::refresh(refresh_configuration)`]: https://docs.rs/jwt-authorizer/latest/jwt_authorizer/layer/struct.AuthorizerBuilder.html#method.refresh
