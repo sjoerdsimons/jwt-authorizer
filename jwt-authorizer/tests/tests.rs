@@ -2,6 +2,7 @@ mod common;
 
 #[cfg(test)]
 mod tests {
+    use std::convert::Infallible;
     use std::sync::Arc;
 
     use axum::{
@@ -9,7 +10,7 @@ mod tests {
         http::{Request, StatusCode},
         response::Response,
         routing::get,
-        Router,
+        BoxError, Router,
     };
     use http::{header, HeaderValue};
     use jwt_authorizer::{
@@ -19,7 +20,7 @@ mod tests {
         JwtClaims,
     };
     use serde::Deserialize;
-    use tower::ServiceExt;
+    use tower::{util::MapErrLayer, ServiceExt};
 
     use crate::common;
 
@@ -34,7 +35,15 @@ mod tests {
     {
         Router::new().route("/public", get(|| async { "hello" })).route(
             "/protected",
-            get(|JwtClaims(user): JwtClaims<User>| async move { format!("hello: {}", user.sub) }).layer(layer),
+            get(|JwtClaims(user): JwtClaims<User>| async move { format!("hello: {}", user.sub) }).layer(
+                tower_layer::Stack::new(
+                    tower_layer::Stack::new(
+                        tower::buffer::BufferLayer::new(1),
+                        MapErrLayer::new(|e: BoxError| -> Infallible { panic!("{}", e) }),
+                    ),
+                    layer,
+                ),
+            ),
         )
     }
 
